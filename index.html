@@ -6,112 +6,50 @@
     <title>TikTok Live Chat</title>
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 10px;
-            background-color: #000000; /* Глубокий черный для лучшего контраста */
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            overflow-x: hidden;
-        }
-
-        #chat-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .message {
-            display: flex;
-            align-items: flex-start; /* Выравнивание по верху */
-            background: rgba(255, 255, 255, 0.08);
-            padding: 8px 12px;
-            border-radius: 16px;
-            animation: slideIn 0.25s ease-out forwards;
-            word-break: break-word;
-        }
-
-        .avatar {
-            width: 30px; /* Уменьшили размер */
-            height: 30px;
-            border-radius: 50%;
-            margin-right: 10px;
-            flex-shrink: 0; /* Чтобы аватар не сжимался */
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .content {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .username {
-            font-weight: 700;
-            color: #25F4EE; /* Цвет акцента */
-            font-size: 13px;
-            margin-bottom: 2px;
-            opacity: 0.8;
-        }
-
-        .text {
-            font-size: 15px;
-            line-height: 1.3;
-            color: #ffffff;
-        }
-
-        .sys-message {
-            color: #555;
-            font-size: 12px;
-            text-align: center;
-            padding: 5px;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        body { margin: 0; padding: 10px; background-color: #000; color: #fff; font-family: sans-serif; }
+        #viewer-count { position: fixed; top: 10px; right: 15px; background: rgba(255, 0, 0, 0.8); color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; z-index: 1000; display: none; }
+        #chat-container { display: flex; flex-direction: column; gap: 8px; margin-top: 30px; }
+        .message { display: flex; align-items: flex-start; background: rgba(255, 255, 255, 0.08); padding: 8px 12px; border-radius: 16px; animation: slideIn 0.25s ease-out forwards; }
+        .avatar { width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+        .content { display: flex; flex-direction: column; }
+        .username { font-weight: 700; color: #25F4EE; font-size: 13px; margin-bottom: 2px; }
+        .text { font-size: 15px; line-height: 1.3; }
+        .sys-message { color: #555; font-size: 12px; text-align: center; padding: 5px; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-
+    <div id="viewer-count">👁 0</div>
     <div id="chat-container">
         <div class="sys-message">Ожидание подключения...</div>
     </div>
-
     <script>
-        const BACKEND_URL = "https://tiktok-chat-server-4pkz.onrender.com";
+        const BACKEND_URL = "https://tiktok-chat-server-4pkz.onrender.com"; 
         const socket = io(BACKEND_URL);
         const chatContainer = document.getElementById('chat-container');
+        const viewerBadge = document.getElementById('viewer-count');
 
-        const urlParams = new URLSearchParams(window.location.search);
-        let username = urlParams.get('u');
+        const username = new URLSearchParams(window.location.search).get('u') || prompt("Ник:");
+        if (username) socket.emit('set-username', username);
 
-        if (!username) {
-            username = prompt("Введите ваш ник в TikTok (без @):");
-        }
-
-        if (username) {
-            socket.emit('set-username', username);
-        }
+        socket.on('viewer-count', (count) => {
+            viewerBadge.style.display = 'block';
+            viewerBadge.innerText = `👁 ${count}`;
+        });
 
         socket.on('sys-message', (msg) => {
-            const sysDiv = document.createElement('div');
-            sysDiv.className = 'sys-message';
-            sysDiv.innerText = msg;
-            chatContainer.prepend(sysDiv);
+            const div = document.createElement('div');
+            div.className = 'sys-message';
+            div.innerText = msg;
+            chatContainer.prepend(div);
         });
 
         socket.on('chat', (data) => {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message';
-            msgDiv.innerHTML = `
-                <img src="${data.profilePictureUrl}" class="avatar" alt="">
-                <div class="content">
-                    <span class="username">${data.nickname}</span>
-                    <span class="text">${data.comment}</span>
-                </div>
-            `;
-            chatContainer.prepend(msgDiv);
+            const div = document.createElement('div');
+            div.className = 'message';
+            div.innerHTML = `<img src="${data.profilePictureUrl}" class="avatar">
+                             <div class="content"><span class="username">${data.nickname}</span><span class="text">${data.comment}</span></div>`;
+            chatContainer.prepend(div);
         });
     </script>
 </body>
