@@ -1,83 +1,77 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой TikTok Чат</title>
+    <title>TikTok Live Chat</title>
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
     <style>
         body {
             margin: 0;
-            padding: 15px;
-            background-color: #121212;
-            /* Темная тема */
+            padding: 10px;
+            background-color: #000000; /* Глубокий черный для лучшего контраста */
             color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overflow-x: hidden;
         }
 
         #chat-container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .message {
             display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 10px;
-            border-radius: 12px;
-            animation: slideIn 0.3s ease-out forwards;
+            align-items: flex-start; /* Выравнивание по верху */
+            background: rgba(255, 255, 255, 0.08);
+            padding: 8px 12px;
+            border-radius: 16px;
+            animation: slideIn 0.25s ease-out forwards;
             word-break: break-word;
         }
 
         .avatar {
-            width: 40px;
-            height: 40px;
+            width: 30px; /* Уменьшили размер */
+            height: 30px;
             border-radius: 50%;
-            margin-right: 12px;
-            object-fit: cover;
-            border: 2px solid #25F4EE;
-            /* Цвет тиктока */
+            margin-right: 10px;
+            flex-shrink: 0; /* Чтобы аватар не сжимался */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
         }
 
         .username {
-            font-weight: bold;
-            color: #FE2C55;
-            /* Цвет тиктока */
-            margin-right: 8px;
-            font-size: 15px;
+            font-weight: 700;
+            color: #25F4EE; /* Цвет акцента */
+            font-size: 13px;
+            margin-bottom: 2px;
+            opacity: 0.8;
         }
 
         .text {
-            font-size: 16px;
-            line-height: 1.4;
+            font-size: 15px;
+            line-height: 1.3;
+            color: #ffffff;
         }
 
         .sys-message {
-            color: #888;
-            font-style: italic;
+            color: #555;
+            font-size: 12px;
             text-align: center;
-            margin-bottom: 10px;
+            padding: 5px;
         }
 
-        /* Анимация появления сверху */
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-
 <body>
 
     <div id="chat-container">
@@ -85,13 +79,10 @@
     </div>
 
     <script>
-        // ВНИМАНИЕ: Вставь сюда ссылку, которую ты скопировал с Render!
         const BACKEND_URL = "https://tiktok-chat-server-4pkz.onrender.com";
-
         const socket = io(BACKEND_URL);
         const chatContainer = document.getElementById('chat-container');
 
-        // Получаем никнейм из ссылки (например: твоя-ссылка.github.io/?u=tvoy_nick)
         const urlParams = new URLSearchParams(window.location.search);
         let username = urlParams.get('u');
 
@@ -101,33 +92,27 @@
 
         if (username) {
             socket.emit('set-username', username);
-        } else {
-            document.querySelector('.sys-message').innerText = "Никнейм не указан. Обновите страницу.";
         }
 
         socket.on('sys-message', (msg) => {
             const sysDiv = document.createElement('div');
             sysDiv.className = 'sys-message';
             sysDiv.innerText = msg;
-            chatContainer.prepend(sysDiv); // Добавляем наверх
+            chatContainer.prepend(sysDiv);
         });
 
         socket.on('chat', (data) => {
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message';
-
             msgDiv.innerHTML = `
-                <img src="${data.profilePictureUrl}" class="avatar" alt="avatar">
-                <div>
+                <img src="${data.profilePictureUrl}" class="avatar" alt="">
+                <div class="content">
                     <span class="username">${data.nickname}</span>
                     <span class="text">${data.comment}</span>
                 </div>
             `;
-
-            // САМОЕ ГЛАВНОЕ: prepend() вставляет новое сообщение СВЕРХУ, сдвигая старые вниз
             chatContainer.prepend(msgDiv);
         });
     </script>
 </body>
-
 </html>
